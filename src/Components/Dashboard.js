@@ -10,11 +10,21 @@ function Dashboard() {
   const [chargeCustomers, setChargeCustomers] = useState(null);
   const [customSongAmount, setCustomSongAmount] = useState();
   const [regularSongAmounts, setRegularSongAmounts] = useState({});
-  const [saving, setSaving] = useState(false);
   const [chart, setChart] = useState(null);
 
+  const fetchAdminDetails = async (adminId) => {
+
+    const url = `https://stg.dhunjam.in/account/admin/${adminId}`;
+    const { data } = await axios.get(url);
+    const { status, data: adminDetailsData } = data;
+    if (status === 200) {
+      setAdminDetails(adminDetailsData);
+      const { charge_customers } = adminDetailsData;
+      setChargeCustomers(charge_customers);
+    } 
+};
+
   useEffect(() => {
-    // Fetch admin details when the component mounts
     if (responseData && responseData.id) {
       fetchAdminDetails(responseData.id);
     }
@@ -68,11 +78,9 @@ function Dashboard() {
           ],
         },
       };
-      // Destroy the existing chart if it exists
       if (chart) {
         chart.destroy();
       }
-      // Create a new chart and store the reference in the state
       const newChart = new Chart(document.getElementById('myChart'), {
         type: 'bar',
         data: chartData,
@@ -83,32 +91,9 @@ function Dashboard() {
     }
   }, [adminDetails, customSongAmount, regularSongAmounts]);
 
-  const fetchAdminDetails = async (adminId) => {
-    try {
-      const url = `https://stg.dhunjam.in/account/admin/${adminId}`;
-      const { data } = await axios.get(url);
 
-      // Assuming the response structure is as provided
-      const { status, data: adminDetailsData } = data;
-
-      if (status === 200) {
-        // Set admin details in state
-        setAdminDetails(adminDetailsData);
-        // Extract values for Social, Hebbal, charge_customers, and amount
-        const { charge_customers } = adminDetailsData;
-
-        // Set chargeCustomers based on the response
-        setChargeCustomers(charge_customers);
-      } else {
-        console.error('Failed to fetch admin details:', data);
-      }
-    } catch (error) {
-      console.error('Error during admin details fetch:', error);
-    }
-  };
 
   const handleSave = async () => {
-      //setSaving(true);
       await axios.put(`https://stg.dhunjam.in/account/admin/${responseData.id}`, {
         amount: {
           category_6: customSongAmount,
@@ -119,9 +104,6 @@ function Dashboard() {
         },
       });
       await fetchAdminDetails(responseData.id);
-      //setSaving(false);
-      console.log('Saved successfully!');
-    
   };
 
   const isSaveButtonEnabled =
